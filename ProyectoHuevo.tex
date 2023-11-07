@@ -1,0 +1,33 @@
+\documentclass{article}
+\begin{document}
+\section{?`Que quiero hacer?}
+Simular la evolución de la temperatura en el interior de un huevo de gallina que se encuentra en proceso de incubaci\'on, al menos durante los primeros 12 d\'ias que corresponde a un periodo de tiempo en el cual el huevo tiene un aumento significativo en el n\'umero de c\'elulas en su interior.
+
+\section{?`Por qu\'e lo quiero hacer?}
+Quiero hacer el proyecto enfocado en el problema mencionado porque quiero aprender a simular un sistema en el cual una de las variables a medir experimentalmente depende de varias variables. Adicionalmente, me motiva el hecho de simular sistemas biol\'ogicos, iniciar por la evolución de la temperatura en un huevo en incubación es un excelente punto de partida por su simplicidad.
+
+\section{?`Como lo voy a hacer?}
+Voy a simular el huevo inicialmente como una esfera, compuesta por 3 esferas conc\'entricas. La primera esfera representaría la yema, la siguiente la clara y la mas externa la c\'ascara. Voy a hacer algunas consideraciones extras: considerar\'e el volumen total del huevo constante, la yema será la fuente de calor, los vol\'umenes de la yema y la clara cambiarán con el tiempo conjuntamente (siendo la suma de ambas, constantes en el tiempo), el medio externo al huevo intercambiará calor con el huevo, la yema la simular\'e como un espacio homogeneo en el cual ir\'an surgiendo c\'elulas a determinada tasa, cada c\'elula ser\'a una pequeña fuente de calor. \\
+
+Link github: https://github.com/debernall/Huevo.git.
+
+\section{?`Que resultados espero obtener?}
+Espero obtener una aproximaci\'on a los resultados obtenidos por diferentes autores sobre la evolución de la temperatura en el interior del huevo durante los primeros 12 d\'ias de desarrollo. Ajustar\'e el modelo para hacer la simulaci\'on lo mas similar al sistema biológico real.
+
+\section{Cronograma}
+Semana 1: Revisar bibliograf\'ia, plantear los sistema de ecuaciones, definir las constantes y condiciones iniciales, definir cual ser\'a el espacio en el cual se va a desarrollar la evoluci\'on del huevo (coordenadas cartesianas). Plantear la ecuación que me va a permitir la evolución temporal por medio del método de diferencias finitas.\\
+
+Semana 2: Graficar, quiero obtener una simulación que me permita ver las 3 regiones en evoluci\'on y el cambio de la temperatura a lo largo del tiempo. La idea es que se vea como un video o usar un scroll para el tiempo. Terminar el documento y la presentaci\'on. Realizar una nueva revisión bibliogr\'afica y adaptar el c\'odigo para que me acepte el acople de otras ecuaciones diferenciales.\\
+
+Semana 3: Incluir en el modelo al menos un efecto adicional como por ejemplo la dependencia de la temperatura respecto a la concentraci\'on de CO2. Esto saldr\'a de la revisi\'on bibliogr\'afica de la semana anterior.\\
+
+\section{Referencias}
+P.W. Barlow, D. Bray, P.B. Green y J.M.W. Slack. (1991) From egg to embryo.\\
+B.M. Freeman. (1974) Development of the avian embryo.\\
+L.G. Barth y L.J. Barth. (1954) The energetics of development.\\
+D.C. Deeming y M.W.J. Ferguson. (1992) Egg incubation: its effects on embryonic development in birds and reptiles.\\
+S. Sandoval, V. Gomez-Muñoz, J. Gutierrez y M.A. Porta-Gandara. (2011) Metabolic heat estimation of the sea turtle Lepidochelys olivacea embryos.\\
+
+
+\end{document}
+
