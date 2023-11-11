@@ -9,7 +9,7 @@ import time
 # Constantes de la simulación. 
 # Construcción de la matriz cúbica del espacio, n es el tamaño de cada vector que compone la matriz del espacio.
 # En este caso elijo n=50, por tanto n^3=125.000 son los puntos que componen la matriz del espacio
-n = 500                                       #500 es un buen numero consumo 250MB
+n = 100                                       #500 es un buen numero consumo 250MB
 
 # m es el valor máximo y mínimo alcanzado por la matriz del espacio. En este caso se define un espacio formado entre
 # -25 y 25 en x,y,z. Las unidades están dadas en micrómetros
@@ -19,7 +19,9 @@ d = np.int(2*m/(n-1))
 # En este caso cada punto representa un espacio equivalente a (xxxxxxx PENDIENTE POR CALCULAR)                                   
 
 # Constantes para la formación del huevo, en este caso el huevo es esférico. r=24mm
-R = 240                                          
+Rc = 240                                                #Grosor de la cáscara de 0.3mm                                         
+Ra = 237 
+Ry = 100
 
 # Creación de 3 matrices que representan las coordenadas x,y,z para cada punto dentro de la matriz de espacio
 t0 = time.time()
@@ -36,9 +38,27 @@ x, y, z = np.meshgrid(m1,m1,m1, indexing='ij')                 # Creación de la
 # Dado que el huevo tendrá simetría de revolución, "r" me representará el radio para cada punto a lo largo de z
 # Como me interesa usar un espacio 3D mas grande que el huevo, para los valores de z fuera de la superficie del huevo: el radio=False 
 
-R_xy = (x*x)+(y*y)
-R_z = (R*R)-(z*z)
-M = R_xy<=R_z
+
+
+# Yema - y
+Ry_xy = (x*x)+(y*y)
+Ry_z = (Ry*Ry)-(z*z)
+My = Ry_xy<=Ry_z
+
+
+# Albúmina - a
+Ra_xy = (x*x)+(y*y)
+Ra_z = (Ra*Ra)-(z*z)
+Ma = Ra_xy<=Ra_z
+
+
+# Cáscara - c
+Rc_xy = (x*x)+(y*y)
+Rc_z = (Rc*Rc)-(z*z)
+Mc = Rc_xy<=Rc_z
+
+Mc = Mc ^ Ma
+Ma = Ma ^ My
 
 tf = time.time()
 
@@ -47,8 +67,9 @@ print("Tamaño en MB: "+str(x.nbytes/1000000))
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-scatter = ax.scatter3D(x, y, z, c=M, cmap='gray', s=0.001)
+scatter = ax.scatter3D(x, y, z, c=Mc*-1, cmap='gray', s=0.0005)                 #Gráfica de la cáscara
 plt.show()
+
 
 
 # Implementación del método de diferencias finitas para la ecuación de difusión de calor, usando una función
