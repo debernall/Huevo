@@ -14,7 +14,7 @@ n = 100                                       #500 es un buen numero consumo 250
 # m es el valor máximo y mínimo alcanzado por la matriz del espacio. En este caso se define un espacio formado entre
 # -25 y 25 en x,y,z. Las unidades están dadas en micrómetros
 m = 250                                          #Determina el max y el min valor del espacio   25000micrometros lo reduzco a 250
-d = np.int(2*m/(n-1)) 
+d = np.int32(2*m/(n-1)) 
 
 # En este caso cada punto representa un espacio equivalente a (xxxxxxx PENDIENTE POR CALCULAR)                                   
 
@@ -41,21 +41,25 @@ x, y, z = np.meshgrid(m1,m1,m1, indexing='ij')                 # Creación de la
 
 
 # Yema - y
-Ry_xy = (x*x)+(y*y)
+R_xy = (x*x)+(y*y)
 Ry_z = (Ry*Ry)-(z*z)
-My = Ry_xy<=Ry_z
+My = R_xy<=Ry_z
 
+theta = np.radians(8)
+g = np.tan(theta)
+a_a = 242
+b_a = 162
 
 # Albúmina - a
-Ra_xy = (x*x)+(y*y)
-Ra_z = (Ra*Ra)-(z*z)
-Ma = Ra_xy<=Ra_z
+Ra_z = ((b_a+(g*z))*(b_a+(g*z)))*(1-((z*z)/(a_a*a_a)))
+Ma = R_xy<=Ra_z
 
+a_c = 245
+b_c = 165
 
 # Cáscara - c
-Rc_xy = (x*x)+(y*y)
-Rc_z = (Rc*Rc)-(z*z)
-Mc = Rc_xy<=Rc_z
+Rc_z = ((b_c+(g*z))*(b_c+(g*z)))*(1-((z*z)/(a_c*a_c)))
+Mc = R_xy<=Rc_z
 
 Mc = Mc ^ Ma
 Ma = Ma ^ My
@@ -67,7 +71,8 @@ print("Tamaño en MB: "+str(x.nbytes/1000000))
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-scatter = ax.scatter3D(x, y, z, c=Mc*-1, cmap='gray', s=0.0005)                 #Gráfica de la cáscara
+scatter = ax.scatter3D(x, y, z, c=Ma*-1, cmap='gray', s=0.0005)                 #Gráfica de la cáscara
+ax.view_init(0, 90)
 plt.show()
 
 
