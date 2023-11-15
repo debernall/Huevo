@@ -63,7 +63,7 @@ scatter = ax.scatter3D(x, y, z, c=Ma*-1, cmap='gray', s=0.0005)                 
 ax.view_init(0, 90)
 plt.show()
 
-
+##Prueba Git
 
 # Implementación del método de diferencias finitas para la ecuación de difusión de calor, usando una función
 
