@@ -15,10 +15,9 @@ x, y, z = np.meshgrid(m1,m1,m1, indexing='ij')  		#Construcción de una red de p
 
 fig = plt.figure()								#Inicialización de una figura con matplotlib
 ax = fig.add_subplot(111, projection='3d')					#Primer subplot
-scatter = ax.scatter3D(x.flatten(), y.flatten(), z.flatten(), c=datos.flatten(), cmap='hot', s=0.1/n)		#Gráfica de Temperatura, s es el tamaño de los nodos
-ax.view_init(45, 45)								#Ángulos iniciales de observación de la gráfica generada
+scatter = ax.scatter3D(x.flatten(), y.flatten(), z.flatten(), c=Temp.flatten(), cmap='hot', s=0.05/n)		#Gráfica de Temperatura, s es el tamaño de los nodos
+ax.view_init(0, 0)								#Ángulos iniciales de observación de la gráfica generada
 fig.colorbar(scatter, label='Temperatura')					#Barra lateral que indica la escala de temperatura en función del color presentado en la gráfica
-plt.show()									#CAMBIAR A IMPORTAR A JPG 
-
+plt.savefig('Temperatura.jpg')
 
 
