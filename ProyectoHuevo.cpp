@@ -8,8 +8,6 @@
 using namespace std;
 
 int main () {
-	ofstream outfile;									//Inicialización variable de documento
-	outfile.open("Matriz.dat");								//Apertura de documento para escritura
 
 	const double pi = M_PI;									//Pi
 	int n = 100;										//Número de nodos en cada dirección de la matriz nxnxn
@@ -23,10 +21,10 @@ int main () {
 	double a_casc = 24.6;									//Longitud del semieje mayor cáscara
 	double b_casc = 19.6;									//Longitud del semieje menor cáscara
 
-	vector<vector<vector<double>>> T(n, vector<vector<double>>(n, vector<double>(n)));	//Temperatura en t presente en cada nodo
+	vector<vector<vector< double >>> T(n, vector<vector< double >>(n, vector< double >(n)));	//Temperatura en t presente en cada nodo
 	vector<vector<vector<double>>> Tf(n, vector<vector<double>>(n, vector<double>(n)));	//Temperatura en t futuro en cada nodo
 	vector<vector<vector<double>>> Fo(n, vector<vector<double>>(n, vector<double>(n)));	//Número de Fourier para cada nodo
-
+	
 	double x,y,z;										//Inicialización de variables de longitud
 	double r2,R2_casc,R2_albu,R2_yema;							//Inicialización de variables de radio
 	
@@ -76,12 +74,14 @@ int main () {
 	
 	//EVOLUCIÓN TEMPORAL
 	double Fo_i;								//Inicialización de variable Número de Fourier para reducir la extensión de la ecuación de calor
-	double k = -0.0000001;
+	double kk = -0.0000003;
 	double rmax_y = 19.0;
-	double cont = 0;
-	cout << Ry << "\n";
+	int t_imp[4] = {0,10,30,55};
+
 	for (int t=0; t<tf; t++){
-		cont = cont +1;
+		
+		Ry = Ry * cbrt(1+(kk*dt*(log(rmax_y)-log(4*pi*Ry*Ry*Ry/3))));
+
 		for (int i=0;i<n;i++){
 			for (int j=0; j<n;j++){
 				for (int k=0; k<n; k++){
@@ -89,10 +89,6 @@ int main () {
 					x = (i*dx)-m;							//Posiciones en mm medidas desde el centro de la red de nodos
 					y = (j*dx)-m;
 					z = (k*dx)-m;
-					
-					
-					
-					//Ry = Ry * cbrt(1+(k*dt*(log(rmax_y)-log(4*pi*Ry*Ry*Ry/3))));
 					
 					r2 = x*x+z*z;								//Distancia de cada punto sobre sucesivos planos y al eje y
 					R2_casc = (1-((y*y)/(a_casc*a_casc)))*(b_casc+(y*g))*(b_casc+(y*g));	//Distancia máxima de la cascara sobre sucesivos planos y al eje y
@@ -114,11 +110,12 @@ int main () {
 							Fo[i][j][k]=a*dt/(dx*dx);				//Número de Fourier del nodo
 						}
 						//Temperatura futura por medio del método diferencias finitas - balance de energía
-						//Tf[i][j][k]=Fo_i*((T[i][j][k]*((1/Fo_i)-6))+T[i+1][j][k]+T[i-1][j][k]+T[i][j+1][k]+T[i][j-1][k]+T[i][j][k+1]+T[i][j][k-1]);	
+						Tf[i][j][k]=Fo_i*((T[i][j][k]*((1/Fo_i)-6))+T[i+1][j][k]+T[i-1][j][k]+T[i][j+1][k]+T[i][j-1][k]+T[i][j][k+1]+T[i][j][k-1]);	
 					}				
 				}
 			}
 		}
+				
 		for (int i=0;i<n;i++){								//Almaceno la Temperatura futura calculada en Temperatura presente para el sig ciclo 
 			for (int j=0; j<n;j++){
 				for (int k=0; k<n; k++){
@@ -126,24 +123,31 @@ int main () {
 				}
 			}
 		}
-	}
-	cout << dt << "\n";
-	cout << Ry << "\n";
-	cout << "pow " << cbrt(1+(k*dt*(log(rmax_y)-log(4*pi*Ry*Ry*Ry/3)))) << "\n";
-	cout << "pow " << 1+(k*dt*(log(rmax_y)-log(4*pi*Ry*Ry*Ry/3))) << "\n";
-	
-	cout << Ry << "\n";
-	cout << cont ;
-	//IMPRESIÓN A ARCHIVO EXTERNO
-	for (int i=0;i<n;i++){
-			for (int j=0; j<n;j++){
-				for (int k=0; k<n; k++){
-					outfile << T[i][j][k] << "\n";				//Almaceno la última temperatura en un documento externo
+
+		for (int u=0; u<4;u++){
+			if (t==t_imp[u]){
+				string Nombre = "Matriz";
+				Nombre = Nombre + to_string(t_imp[u]) + ".dat";
+				ofstream outfile;									//Inicialización variable de documento
+				outfile.open(Nombre);								//Apertura de documento para escritura				
+
+				for (int i=0;i<n;i++){								//IMPRESIÓN A ARCHIVO EXTERNO
+					for (int j=0; j<n;j++){
+						for (int k=0; k<n; k++){
+							outfile << T[i][j][k] << "\n";				//Almaceno la última temperatura en un documento externo
+						}
+					}
 				}
+				outfile.close();
 			}
 		}
+	}
+
+	
+
+			
 
 
-	outfile.close();									//Cierre del documento para escritura
+										//Cierre del documento para escritura
 	return 0;
 }
