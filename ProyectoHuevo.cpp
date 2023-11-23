@@ -215,7 +215,7 @@ int main () {
 			}
 		}
 		//*************Temperatura media de cada región***********************************
-		if (t=dt*contador){
+		if (t==dt*contador){
 			outfileTemp << t*dt/3600 << " ; ";
 			outfileVol << t*dt/3600 << " ; ";
 			for (int w=0;w<4;w++){
