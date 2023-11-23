@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <regex>
+#include <ctime>
 
 using namespace std;
 
@@ -13,6 +14,9 @@ double BalEnerg(double Fo, double T0, double T1, double T2, double T3, double T4
 }
 
 int main () {
+
+	unsigned t0, t1;
+	
 	//********************IMPORTE DE VARIABLES Y DATOS INICIALES****************************
 	string linea;										//Variable string que me va a almacenar la info de las variables
   	fstream Datos ("DatosIniciales.dat");							//Importación de los datos iniciales
@@ -51,26 +55,36 @@ int main () {
 	double r2,R2_casc,R2_albu,R2_yema;							//Inicialización de variables de radio
 	double rmax_y = variables["rmax_y"];							//Radio máximo de la yema
 	//Propiedades térmicas	
-	double a = variables["a"];								//Difusividad térmica (PENDIENTE POR CAMBIAR - VALOR DE PRUEBA)	
+	double k = variables["k"];
+	double rho = variables["rho"];
+	double cp = variables["cp"];
+	double a = k/(rho*cp);								//Difusividad térmica (PENDIENTE POR CAMBIAR - VALOR DE PRUEBA)	
 	double T0_Aire=variables["T0_Aire"];							//Temperatura inicial del Aire circundante
 	double T0_Huevo=variables["T0_Huevo"];							//Temperatura inicial Huevo (TEMP DE PRUEBA)
 	double Nodos[4]={0,0,0,0};
 	//Evolución temporal
 	double Fo_i;										//Inicialización de variable Número de Fourier 
 	double dt = 0.95*dx*dx/(6*a);								//Diferencial de tiempo calculado en base a la condición de estabilidad
-	double t_muestreo = dt*variables["t"];							//Tiempo de muestreo máximo (PENDIENTE)
-	int tf = int(t_muestreo/dt);								//Número máximo de intervalos de tiempo
+	cout << "dt" << dt << " dx:" << dx << " a:" << a << "\n";
+	double t_m = dt*variables["t"];							//Tiempo de muestreo máximo (PENDIENTE)
+	int tf = int(t_m/dt);								//Número máximo de intervalos de tiempo
+	//int t_muestreo[100]={0};
+	//for (int i=0;i<100;i++){t_muestreo[i]=int(i*tf/100);}
+	int dt_imp = int(tf/100);
+	int contador = 0;
 	int t_imp[4] = {0,33,66,100};								//Tiempos que se desean graficar
 	int t_imp2[4] = {0,int(t_imp[1]*tf/100),int(t_imp[2]*tf/100),tf};
+	
 	//Crecimiento del embrión
 	double kk = variables["kk"];								//Tasa de crecimiento de la yema
+	
 	
 	//Vectores del modelo
 	vector<vector<vector< double >>> T(n, vector<vector< double >>(n, vector< double >(n)));//Temperatura en t presente en cada nodo
 	vector<vector<vector<double>>> Tf(n, vector<vector<double>>(n, vector<double>(n)));	//Temperatura en t futuro en cada nodo
 	vector<vector<vector<double>>> Fo(n, vector<vector<double>>(n, vector<double>(n)));	//Número de Fourier para cada nodo
-	vector<vector<double>> TMuestreo(tf+1, vector<double>(tf+1,0));				//Almacena la temperatura media de cada región
-	vector<vector<double>> VolMuestreo(tf+1, vector<double>(tf+1,0));				//Almacena la temperatura media de cada región
+	vector<vector<double>> TMuestreo(100, vector<double>(100,0));				//Almacena la temperatura media de cada región
+	vector<vector<double>> VolMuestreo(100, vector<double>(100,0));				//Almacena la temperatura media de cada región
 	
 	//Archivo de muestreo de temperatura media
 	ofstream outfileTemp;
@@ -80,7 +94,7 @@ int main () {
 	ofstream outfileVol;
 	outfileVol.open("Volumen.dat");
 	outfileTemp << "Tiempo ; Volumen_Exterior ; Volumen_Cascara ; Volumen_Albumina ; Volumen_Yema\n";
-		
+	
 	//*************************CONDICIONES INICIALES****************************************
 	for (int i=0;i<n;i++){
 		for (int j=0; j<n;j++){
@@ -115,7 +129,8 @@ int main () {
 			}	
 		}
 	}	
-	
+	t0=clock();
+
 	//****************************EVOLUCIÓN TEMPORAL****************************************
 	for (int t=0; t<=tf; t++){
 		Ry = Ry * cbrt(1+(kk*dt*(log(4*pi*rmax_y*rmax_y*rmax_y/3)-log(4*pi*Ry*Ry*Ry/3))));
@@ -200,26 +215,32 @@ int main () {
 			}
 		}
 		//*************Temperatura media de cada región***********************************
-		outfileTemp << t*dt/3600 << " ; ";
-		outfileVol << t*dt/3600 << " ; ";
-		for (int w=0;w<4;w++){
-			TMuestreo[t][w]=TMuestreo[t][w]/Nodos[w];
-			VolMuestreo[t][w]=Nodos[w]*dx*dx*dx;
-			outfileTemp << TMuestreo[t][w];
-			outfileVol << VolMuestreo[t][w];
-			if (w<3){
-				outfileTemp << " ; ";
-				outfileVol << " ; ";
+		if (t=dt*contador){
+			outfileTemp << t*dt/3600 << " ; ";
+			outfileVol << t*dt/3600 << " ; ";
+			for (int w=0;w<4;w++){
+				TMuestreo[t][w]=TMuestreo[t][w]/Nodos[w];
+				VolMuestreo[t][w]=Nodos[w]*dx*dx*dx;
+				outfileTemp << TMuestreo[t][w];
+				outfileVol << VolMuestreo[t][w];
+				if (w<3){
+					outfileTemp << " ; ";
+					outfileVol << " ; ";
+				}
+				else {
+					outfileTemp << "\n";
+					outfileVol << "\n";
+				}				
+				Nodos[w]=0;
 			}
-			else {
-				outfileTemp << "\n";
-				outfileVol << "\n";
-			}				
-			Nodos[w]=0;
+			contador = contador+1;
 		}
  	}	
 	outfileTemp.close();
 	outfileVol.close();
-								
+	t1=clock();
+	double time=(double(t1-t0)/CLOCKS_PER_SEC);
+	cout << time << "\n";
+							
 	return 0;
 }
