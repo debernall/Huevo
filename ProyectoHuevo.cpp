@@ -8,8 +8,11 @@
 
 using namespace std;
 
-int main () {
+double BalEnerg(double Fo, double T0, double T1, double T2, double T3, double T4, double T5, double T6){
+	return Fo*((T0*((1/Fo)-6))+T1+T2+T3+T4+T5+T6);
+}
 
+int main () {
 	//********************IMPORTE DE VARIABLES Y DATOS INICIALES****************************
 	string linea;										//Variable string que me va a almacenar la info de las variables
   	fstream Datos ("DatosIniciales.dat");							//Importación de los datos iniciales
@@ -22,9 +25,11 @@ int main () {
 												//Fuente: https://www.vishalchovatiya.com/regex-c/
 		smatch variable;								//Aquí se va a almacenar el nombre de la variable
 		smatch valor;									//Aquí se va a almacenar el valor de la variable
-		regex_search(linea, variable, exp_variable);					//Se hace la busqueda en cada linea con la expresión regular
-		regex_search(linea, valor, exp_valor);						//Fuente: https://en.cppreference.com/w/cpp/regex/regex_search
-		variables[variable[1]]=stod(valor[1]);						//Almaceno cada variable en el diccionario de variables
+		if (regex_search(linea, variable, exp_variable)){				//Se hace la busqueda en cada linea con la expresión regular
+			if(regex_search(linea, valor, exp_valor)){				//Fuente: https://en.cppreference.com/w/cpp/regex/regex_search
+				variables[variable[1]]=stod(valor[1]);				//Almaceno cada variable en el diccionario de variables
+    			}
+    		}
     	}
 	Datos.close();										//Cierre del archivo DatosIniciales
 
@@ -49,12 +54,14 @@ int main () {
 	double a = variables["a"];								//Difusividad térmica (PENDIENTE POR CAMBIAR - VALOR DE PRUEBA)	
 	double T0_Aire=variables["T0_Aire"];							//Temperatura inicial del Aire circundante
 	double T0_Huevo=variables["T0_Huevo"];							//Temperatura inicial Huevo (TEMP DE PRUEBA)
+	double Nodos[4]={0,0,0,0};
 	//Evolución temporal
 	double Fo_i;										//Inicialización de variable Número de Fourier 
-	double dt = 0.8*dx*dx/(6*a);								//Diferencial de tiempo calculado en base a la condición de estabilidad
+	double dt = 0.95*dx*dx/(6*a);								//Diferencial de tiempo calculado en base a la condición de estabilidad
 	double t_muestreo = dt*variables["t"];							//Tiempo de muestreo máximo (PENDIENTE)
 	int tf = int(t_muestreo/dt);								//Número máximo de intervalos de tiempo
-	int t_imp[4] = {int(variables["t0"]),int(variables["t1"]),int(variables["t2"]),int(variables["t3"])};	//Tiempos que se desean graficar
+	int t_imp[4] = {0,33,66,100};								//Tiempos que se desean graficar
+	int t_imp2[4] = {0,int(t_imp[1]*tf/100),int(t_imp[2]*tf/100),tf};
 	//Crecimiento del embrión
 	double kk = variables["kk"];								//Tasa de crecimiento de la yema
 	
@@ -62,6 +69,17 @@ int main () {
 	vector<vector<vector< double >>> T(n, vector<vector< double >>(n, vector< double >(n)));//Temperatura en t presente en cada nodo
 	vector<vector<vector<double>>> Tf(n, vector<vector<double>>(n, vector<double>(n)));	//Temperatura en t futuro en cada nodo
 	vector<vector<vector<double>>> Fo(n, vector<vector<double>>(n, vector<double>(n)));	//Número de Fourier para cada nodo
+	vector<vector<double>> TMuestreo(tf+1, vector<double>(tf+1,0));				//Almacena la temperatura media de cada región
+	vector<vector<double>> VolMuestreo(tf+1, vector<double>(tf+1,0));				//Almacena la temperatura media de cada región
+	
+	//Archivo de muestreo de temperatura media
+	ofstream outfileTemp;
+	outfileTemp.open("TemperaturaMedia.dat");
+	outfileTemp << "Tiempo ; Temp_Exterior ; Temp_Cascara ; Temp_Albumina ; Temp_Yema\n";
+	
+	ofstream outfileVol;
+	outfileVol.open("Volumen.dat");
+	outfileTemp << "Tiempo ; Volumen_Exterior ; Volumen_Cascara ; Volumen_Albumina ; Volumen_Yema\n";
 		
 	//*************************CONDICIONES INICIALES****************************************
 	for (int i=0;i<n;i++){
@@ -82,7 +100,7 @@ int main () {
 				}
 				else {
 					if (r2<=R2_yema){					//Nodos pertenecientes a la yema
-						T[i][j][k]=100;						//Condición inicial de temperatura (TEMPERATURA DE PRUEBA)
+						T[i][j][k]=T0_Huevo;					//Condición inicial de temperatura (TEMPERATURA DE PRUEBA)
 						Fo[i][j][k]=a*dt/(dx*dx);				//Número de Fourier del nodo
 					}
 					else if (r2<=R2_albu){					//Nodos pertenecientes a la albúmina
@@ -99,8 +117,9 @@ int main () {
 	}	
 	
 	//****************************EVOLUCIÓN TEMPORAL****************************************
-	for (int t=0; t<tf; t++){
-		Ry = Ry * cbrt(1+(kk*dt*(log(rmax_y)-log(4*pi*Ry*Ry*Ry/3))));			//Modelo Gompertz del crecimiento de un conjunto de celulas, variable: Radio de Yema
+	for (int t=0; t<=tf; t++){
+		Ry = Ry * cbrt(1+(kk*dt*(log(4*pi*rmax_y*rmax_y*rmax_y/3)-log(4*pi*Ry*Ry*Ry/3))));
+												//Modelo Gompertz del crecimiento de un conjunto de celulas, variable: Radio de Yema
 		//*******************Cálculo de la temperatura en cada nodo********************
 		for (int i=0;i<n;i++){
 			for (int j=0; j<n;j++){
@@ -115,25 +134,46 @@ int main () {
 					R2_yema = Ry*Ry - y*y;							//Distancia máxima de la yema sobre sucesivos planos y al eje y
 
 					if (r2>R2_casc){					//Nodos externos al huevo
-						Tf[i][j][k]=25;					//CONDICIÓN DE CONTORNO: El aire circundante se mantiene a temperatura constante
+						Tf[i][j][k]=T0_Aire;				//CONDICIÓN DE CONTORNO: El aire circundante se mantiene a temperatura constante
+						Nodos[0]=Nodos[0]+1;
+						TMuestreo[t][0]=TMuestreo[t][0]+Tf[i][j][k];
 					}
 					else {
 						if (r2<=R2_yema){				//Nodos pertenecientes a la yema
-							T[i][j][k]=100;
+							//T[i][j][k]=100;
 							Fo[i][j][k]=a*dt/(dx*dx);		//Número de Fourier del nodo
+							Tf[i][j][k]=BalEnerg(Fo[i][j][k],T[i][j][k],
+										T[i+1][j][k],T[i-1][j][k],
+										T[i][j+1][k],T[i][j-1][k],
+										T[i][j][k+1],T[i][j][k-1]);
+							Nodos[3]=Nodos[3]+1;
+							TMuestreo[t][3]=TMuestreo[t][3]+Tf[i][j][k];
 						}
 						else if (r2<=R2_albu){				//Nodos pertenecientes a la albúmina
 							Fo[i][j][k]=a*dt/(dx*dx);		//Número de Fourier del nodo
+							Tf[i][j][k]=BalEnerg(Fo[i][j][k],T[i][j][k],
+										T[i+1][j][k],T[i-1][j][k],
+										T[i][j+1][k],T[i][j-1][k],
+										T[i][j][k+1],T[i][j][k-1]);
+							Nodos[2]=Nodos[2]+1;
+							TMuestreo[t][2]=TMuestreo[t][2]+Tf[i][j][k];
 						}
 						else {						//Nodos pertenecientes a la cáscara
 							Fo[i][j][k]=a*dt/(dx*dx);		//Número de Fourier del nodo
+							Tf[i][j][k]=BalEnerg(Fo[i][j][k],T[i][j][k],
+										T[i+1][j][k],T[i-1][j][k],
+										T[i][j+1][k],T[i][j-1][k],
+										T[i][j][k+1],T[i][j][k-1]);
+							Nodos[1]=Nodos[1]+1;
+							TMuestreo[t][1]=TMuestreo[t][1]+Tf[i][j][k];
 						}
 						//Temperatura futura por medio del método diferencias finitas - balance de energía
-						Tf[i][j][k]=Fo_i*((T[i][j][k]*((1/Fo_i)-6))+T[i+1][j][k]+T[i-1][j][k]+T[i][j+1][k]+T[i][j-1][k]+T[i][j][k+1]+T[i][j][k-1]);	
+							
 					}				
 				}
 			}
 		}
+		
 		//******Se almacena la temperatura futura en la temperatura presente************	
 		for (int i=0;i<n;i++){								 
 			for (int j=0; j<n;j++){
@@ -144,7 +184,7 @@ int main () {
 		}
 		//*********Escritura a archivo externo para tiempos predeterminados**************
 		for (int u=0; u<4;u++){	
-			if (t==t_imp[u]){
+			if (t==t_imp2[u]){
 				string Nombre = "Matriz";
 				Nombre = Nombre + to_string(t_imp[u]) + ".dat";			//Me permite crear documentos independientes para cada tiempo solicitado
 				ofstream outfile;						//Inicialización variable de documento
@@ -159,6 +199,27 @@ int main () {
 				outfile.close();
 			}
 		}
-	}									
+		//*************Temperatura media de cada región***********************************
+		outfileTemp << t*dt/3600 << " ; ";
+		outfileVol << t*dt/3600 << " ; ";
+		for (int w=0;w<4;w++){
+			TMuestreo[t][w]=TMuestreo[t][w]/Nodos[w];
+			VolMuestreo[t][w]=Nodos[w]*dx*dx*dx;
+			outfileTemp << TMuestreo[t][w];
+			outfileVol << VolMuestreo[t][w];
+			if (w<3){
+				outfileTemp << " ; ";
+				outfileVol << " ; ";
+			}
+			else {
+				outfileTemp << "\n";
+				outfileVol << "\n";
+			}				
+			Nodos[w]=0;
+		}
+ 	}	
+	outfileTemp.close();
+	outfileVol.close();
+								
 	return 0;
 }

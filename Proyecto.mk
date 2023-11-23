@@ -1,4 +1,4 @@
-Documento.pdf: Documento.tex Presentacion.tex Matriz0.dat Temperatura.jpg
+Documento.pdf: Documento.tex Presentacion.tex Matriz0.dat Temperatura.jpg TemperaturaMedia.jpg Volumen.jpg
 	pdflatex Documento.tex
 Presentacion.pdf: Presentacion.tex Temperatura.jpg
 	pdflatex -synctex=1 -interaction=nonstopmode "Presentacion".tex
@@ -7,3 +7,13 @@ Matriz0.dat: ProyectoHuevo.cpp DatosIniciales.dat
 	./ProyectoHuevo.exe
 Temperatura.jpg: GraficarHuevo.py Matriz0.dat
 	python3 GraficarHuevo.py
+TemperaturaMedia.dat: ProyectoHuevo.cpp DatosIniciales.dat
+	g++ -std=c++11 ProyectoHuevo.cpp -o ProyectoHuevo.exe
+	./ProyectoHuevo.exe
+TemperaturaMedia.jpg: TempMedia.py TemperaturaMedia.dat
+	python3 TempMedia.py
+Volumen.jpg: Volumen.py Volumen.dat
+	python3 Volumen.py
+Volumen.dat: ProyectoHuevo.cpp DatosIniciales.dat
+	g++ -std=c++11 ProyectoHuevo.cpp -o ProyectoHuevo.exe
+	./ProyectoHuevo.exe
