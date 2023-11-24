@@ -65,15 +65,16 @@ int main () {
 	//Evolución temporal
 	double Fo_i;										//Inicialización de variable Número de Fourier 
 	double dt = 0.95*dx*dx/(6*a);								//Diferencial de tiempo calculado en base a la condición de estabilidad
-	cout << "dt" << dt << " dx:" << dx << " a:" << a << "\n";
+	
 	double t_m = dt*variables["t"];							//Tiempo de muestreo máximo (PENDIENTE)
-	int tf = int(t_m/dt);								//Número máximo de intervalos de tiempo
+	int tf = variables["t"];								//Número máximo de intervalos de tiempo
+	
 	//int t_muestreo[100]={0};
 	//for (int i=0;i<100;i++){t_muestreo[i]=int(i*tf/100);}
 	int dt_imp = int(tf/100);
-	int contador = 0;
+	cont = 0;
 	int t_imp[4] = {0,33,66,100};								//Tiempos que se desean graficar
-	int t_imp2[4] = {0,int(t_imp[1]*tf/100),int(t_imp[2]*tf/100),tf};
+//	int t_imp2[4] = {0,int(t_imp[1]*tf/100),int(t_imp[2]*tf/100),tf-1};
 	
 	//Crecimiento del embrión
 	double kk = variables["kk"];								//Tasa de crecimiento de la yema
@@ -83,8 +84,8 @@ int main () {
 	vector<vector<vector< double >>> T(n, vector<vector< double >>(n, vector< double >(n)));//Temperatura en t presente en cada nodo
 	vector<vector<vector<double>>> Tf(n, vector<vector<double>>(n, vector<double>(n)));	//Temperatura en t futuro en cada nodo
 	vector<vector<vector<double>>> Fo(n, vector<vector<double>>(n, vector<double>(n)));	//Número de Fourier para cada nodo
-	vector<vector<double>> TMuestreo(100, vector<double>(100,0));				//Almacena la temperatura media de cada región
-	vector<vector<double>> VolMuestreo(100, vector<double>(100,0));				//Almacena la temperatura media de cada región
+	vector<double> TMuestreo(4,0);				//Almacena la temperatura media de cada región
+	vector<double> VolMuestreo(4,0);				//Almacena la temperatura media de cada región
 	
 	//Archivo de muestreo de temperatura media
 	ofstream outfileTemp;
@@ -93,7 +94,7 @@ int main () {
 	
 	ofstream outfileVol;
 	outfileVol.open("Volumen.dat");
-	outfileTemp << "Tiempo ; Volumen_Exterior ; Volumen_Cascara ; Volumen_Albumina ; Volumen_Yema\n";
+	outfileVol << "Tiempo ; Volumen_Exterior ; Volumen_Cascara ; Volumen_Albumina ; Volumen_Yema\n";
 	
 	//*************************CONDICIONES INICIALES****************************************
 	for (int i=0;i<n;i++){
@@ -130,11 +131,13 @@ int main () {
 		}
 	}	
 	t0=clock();
-
 	//****************************EVOLUCIÓN TEMPORAL****************************************
-	for (int t=0; t<=tf; t++){
+	bool impr;
+	for (int t=0; t<tf; t++){
+		if (t%dt_imp==0){impr=1;}else{impr=0;}
 		Ry = Ry * cbrt(1+(kk*dt*(log(4*pi*rmax_y*rmax_y*rmax_y/3)-log(4*pi*Ry*Ry*Ry/3))));
 												//Modelo Gompertz del crecimiento de un conjunto de celulas, variable: Radio de Yema
+		
 		//*******************Cálculo de la temperatura en cada nodo********************
 		for (int i=0;i<n;i++){
 			for (int j=0; j<n;j++){
@@ -150,8 +153,10 @@ int main () {
 
 					if (r2>R2_casc){					//Nodos externos al huevo
 						Tf[i][j][k]=T0_Aire;				//CONDICIÓN DE CONTORNO: El aire circundante se mantiene a temperatura constante
-						Nodos[0]=Nodos[0]+1;
-						TMuestreo[t][0]=TMuestreo[t][0]+Tf[i][j][k];
+						if (impr){
+							Nodos[0]=Nodos[0]+1;
+							TMuestreo[0]=TMuestreo[0]+Tf[i][j][k];
+						}
 					}
 					else {
 						if (r2<=R2_yema){				//Nodos pertenecientes a la yema
@@ -161,8 +166,10 @@ int main () {
 										T[i+1][j][k],T[i-1][j][k],
 										T[i][j+1][k],T[i][j-1][k],
 										T[i][j][k+1],T[i][j][k-1]);
-							Nodos[3]=Nodos[3]+1;
-							TMuestreo[t][3]=TMuestreo[t][3]+Tf[i][j][k];
+							if (impr){
+								Nodos[3]=Nodos[3]+1;
+								TMuestreo[3]=TMuestreo[3]+Tf[i][j][k];
+							}
 						}
 						else if (r2<=R2_albu){				//Nodos pertenecientes a la albúmina
 							Fo[i][j][k]=a*dt/(dx*dx);		//Número de Fourier del nodo
@@ -170,8 +177,10 @@ int main () {
 										T[i+1][j][k],T[i-1][j][k],
 										T[i][j+1][k],T[i][j-1][k],
 										T[i][j][k+1],T[i][j][k-1]);
-							Nodos[2]=Nodos[2]+1;
-							TMuestreo[t][2]=TMuestreo[t][2]+Tf[i][j][k];
+							if (impr){       
+								Nodos[2]=Nodos[2]+1;
+								TMuestreo[2]=TMuestreo[2]+Tf[i][j][k];
+							}
 						}
 						else {						//Nodos pertenecientes a la cáscara
 							Fo[i][j][k]=a*dt/(dx*dx);		//Número de Fourier del nodo
@@ -179,8 +188,10 @@ int main () {
 										T[i+1][j][k],T[i-1][j][k],
 										T[i][j+1][k],T[i][j-1][k],
 										T[i][j][k+1],T[i][j][k-1]);
-							Nodos[1]=Nodos[1]+1;
-							TMuestreo[t][1]=TMuestreo[t][1]+Tf[i][j][k];
+							if (impr){
+								Nodos[1]=Nodos[1]+1;
+								TMuestreo[1]=TMuestreo[1]+Tf[i][j][k];
+							}
 						}
 						//Temperatura futura por medio del método diferencias finitas - balance de energía
 							
@@ -197,9 +208,12 @@ int main () {
 				}
 			}
 		}
+		
 		//*********Escritura a archivo externo para tiempos predeterminados**************
-		for (int u=0; u<4;u++){	
-			if (t==t_imp2[u]){
+
+		if ((t)%int(tf/3)==0){
+//			cout << t << "\n";
+			for (int u=0; u<4;u++){	
 				string Nombre = "Matriz";
 				Nombre = Nombre + to_string(t_imp[u]) + ".dat";			//Me permite crear documentos independientes para cada tiempo solicitado
 				ofstream outfile;						//Inicialización variable de documento
@@ -207,22 +221,24 @@ int main () {
 				for (int i=0;i<n;i++){						
 					for (int j=0; j<n;j++){
 						for (int k=0; k<n; k++){
-							outfile << T[i][j][k] << "\n";	
+							outfile << T[i][j][k] << "\n";					
 						}
 					}
 				}
 				outfile.close();
-			}
+			}		
 		}
+
 		//*************Temperatura media de cada región***********************************
-		if (t==dt*contador){
+				
+		if (impr){
 			outfileTemp << t*dt/3600 << " ; ";
 			outfileVol << t*dt/3600 << " ; ";
 			for (int w=0;w<4;w++){
-				TMuestreo[t][w]=TMuestreo[t][w]/Nodos[w];
-				VolMuestreo[t][w]=Nodos[w]*dx*dx*dx;
-				outfileTemp << TMuestreo[t][w];
-				outfileVol << VolMuestreo[t][w];
+				TMuestreo[w]=TMuestreo[w]/Nodos[w];
+				VolMuestreo[w]=Nodos[w]*dx*dx*dx;
+				outfileTemp << TMuestreo[w];
+				outfileVol << VolMuestreo[w];
 				if (w<3){
 					outfileTemp << " ; ";
 					outfileVol << " ; ";
@@ -230,12 +246,14 @@ int main () {
 				else {
 					outfileTemp << "\n";
 					outfileVol << "\n";
-				}				
+				}
 				Nodos[w]=0;
+				TMuestreo[w]=0;
+				VolMuestreo[w]=0;								
 			}
-			contador = contador+1;
-		}
- 	}	
+			cont = cont + 1;
+		} 		
+  	}	
 	outfileTemp.close();
 	outfileVol.close();
 	t1=clock();
