@@ -10,9 +10,9 @@ b_casc=0.0196
 k=0.58
 rho=997
 cp=4183.3
-t=10000
-T0_Huevo=25
-T0_Aire=100
+t=1000
+T0_Huevo=40
+T0_Aire=25
 kk=0.001
 rmax_y=0.019
 
