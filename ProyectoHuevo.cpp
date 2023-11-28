@@ -9,23 +9,74 @@
 
 using namespace std;
 
-double BalEnerg(double P0, double T0, double T1, double T2, double T3, double T4, double T5, double T6, double P1, double P2, double P3, double P4, double P5, double P6){
-	double P[6] = {P1,P2,P3,P4,P5,P6};
-	int Nod_int=0;
-	for (int i=0;i<6;i++){
-		if (P0==P[i]){
-			Nod_int = Nod_int +1;
+//*********************************************PROYECTO HUEVO
+vector<double> k_term(7,0);							//Conductividad térmica
+vector<double> rho(7,0);							//Densidad
+vector<double> cp(7,0);								//Capacidad calorífica
+vector<double> a(7,0);								//Difusividad térmica
+double dx;									
+double dt;
+
+//*********Función que calcula la temperatura para cada punto en cada instante de tiempo
+double BalEnerg(double P0, double T0, double T1, double T2, double T3, double T4, double T5, double T6,	double Te1, double Te2, double Te3, double Te4, double Te5, double Te6, double Te7, double Te8, double P1, double P2, double P3, double P4, double P5, double P6, double P7, double P8){
+	double Fo=k_term[P0]*dt/(rho[P0]*cp[P0]*dx*dx);				//Número de Fourier, me permite calcular faciltamente el valor adecuado de estabilidad
+	double T;								//Variable para almacenar la temperatura calculada
+	//bool parche=0;							//Variable booleana que me permite identificar si el nodo corresponde al parche de incubación
+	//double K[8]={0,0,0,0,0,0,0,0};			
+	//double P[8]={P1,P2,P3,P4,P5,P6,P7,P8};				
+	
+	//Estaba intentando implementar diferencias finitas aplicando solamente el térmico de conduccción para nodos que pertenecen a la frontera de cada región descrita pero no me funcionó porque requiere un dt demasiado pequeño y los resultados no se ajustaron a los esperados.
+	
+	//int VInt=0;
+	//for (int e=0;e<8;e++){
+	//	if (P[e]==P0){
+	//		K[e]=k_term[P0];
+	//		VInt=VInt+1;
+	//	}
+	//	else {
+	//		K[e]=k_term[P[e]];
+	//		if (P[e]==2 && P0==3){
+	//			parche=1;
+	//		}
+	//	}
+	//}
+	if (P0<=2){								
+		T=T0;
+	}
+	else if(P0==6){
+		T=38;
+	}
+	else{
+		T = Fo*((T0*((1/Fo)-6))+T1+T2+T3+T4+T5+T6);
+	}
+	
+/*	if (VInt>0 && P0>2){
+
+
+		T=0;
+		T=T+((K[0]+K[2]+K[4]+K[6])*(T1-T0));
+		T=T+((K[1]+K[3]+K[5]+K[7])*(T2-T0));
+		T=T+((K[0]+K[1]+K[4]+K[5])*(T3-T0));
+		T=T+((K[2]+K[3]+K[6]+K[7])*(T4-T0));
+		T=T+((K[0]+K[1]+K[2]+K[3])*(T5-T0));
+		T=T+((K[4]+K[5]+K[6]+K[7])*(T6-T0));
+		T = T0+((8*dt/(rho[P0]*cp[P0]*dx*VInt*4))*(T/dx));
+		if (P0==6){
+			T = T + (8*dt*368/(rho[P0]*cp[P0]*dx*VInt));
+		}
+		if (parche){
+			T = T + ((8-VInt)*50000*dt/(rho[P0]*cp[P0]*dx*VInt));
 		}
 	}
-	//Fo*((T0*((1/Fo)-6))+T1+T2+T3+T4+T5+T6);
-	if (P0==6){T0=100;}
-	
-	return T0;
+	else {
+		T=T0;
+	}
+*/		
+	return T;
 }
 
 int main () {
 	unsigned t0, t1;
-	
 	//********************IMPORTE DE VARIABLES Y DATOS INICIALES****************************
 	string linea;										//Variable string que me va a almacenar la info de las variables
   	fstream Datos ("DatosIniciales.dat");							//Importación de los datos iniciales
@@ -51,7 +102,7 @@ int main () {
 	//Geometría del modelo
 	int n = variables["n"];									//Número de nodos en cada dirección de la matriz nxnxn
 	double m = variables["m"];								//Distancia máxima en cada eje desde el origen
-	double dx = (2*m)/(n-1);								//Delta, separación entre cada nodo
+	dx = (2*m)/(n-1);									//Delta, separación entre cada nodo
 	double Ry = variables["Ry"];								//Radio máximo de la yema
 	double theta = variables["theta"];
 	double g = tan(theta*pi/180);								//Tangente en el punto medio del perfíl de huevo 
@@ -60,46 +111,42 @@ int main () {
 	double a_casc = variables["a_casc"];							//Longitud del semieje mayor cáscara
 	double b_casc = variables["b_casc"];							//Longitud del semieje menor cáscara
 	double x,y,z;										//Inicialización de variables de longitud
-	double r2,R2_casc,R2_albu,R2_yema,R_embr,R2_embr;							//Inicialización de variables de radio
-	double rmax_y = variables["rmax_y"];							//Radio máximo de la yema
+	double r2,R2_casc,R2_albu,R2_yema,R_embr,R2_embr;					//Inicialización de variables de radio
+	double Nodos[7]={0,0,0,0,0,0,0};							//En este arreglo me va a permitir contar los nodos de cada región 
+	
 	//Propiedades térmicas	
-	double k = variables["k"];
-	double rho = variables["rho"];
-	double cp = variables["cp"];
-	double a = k/(rho*cp);								//Difusividad térmica (PENDIENTE POR CAMBIAR - VALOR DE PRUEBA)	
+	k_term = {variables["k_aire"],variables["k_nido"],variables["k_parc"],variables["k_casc"],variables["k_albu"],variables["k_yema"],variables["k_embr"]};
+	rho = {variables["rho_aire"],variables["rho_nido"],variables["rho_parc"],variables["rho_casc"],variables["rho_albu"],variables["rho_yema"],variables["rho_embr"]};
+	cp = {variables["cp_aire"],variables["cp_nido"],variables["cp_parc"],variables["cp_casc"],variables["cp_albu"],variables["cp_yema"],variables["cp_embr"]};
+	vector<double> a(7,0);									
+	for (int i=0; i<7; i++){
+		a[i]=k_term[i]/(rho[i]*cp[i]);	
+	}
 	double T0_Aire=variables["T0_Aire"];							//Temperatura inicial del Aire circundante
-	double T0_Huevo=variables["T0_Huevo"];							//Temperatura inicial Huevo (TEMP DE PRUEBA)
-	double Nodos[7]={0,0,0,0,0,0,0};
+	double T0_Huevo=variables["T0_Huevo"];							//Temperatura inicial Huevo
+	double T0_Parche=variables["T0_Parche"];						//Temperatura del parche de incubación
+	double T0_Nido=variables["T0_Nido"];							//Temperatura del nido
+	double T_Sup=variables["T0_Huevo"];							//Esta variable me ayuda a calcular el valor promedio de la temperatura del huevo
+		
 	//Evolución temporal
-	double Fo_i;										//Inicialización de variable Número de Fourier 
-	double dt = 0.95*dx*dx/(6*a);								//Diferencial de tiempo calculado en base a la condición de estabilidad
-	
-	double t_m = dt*variables["t"];							//Tiempo de muestreo máximo (PENDIENTE)
+	dt = 0.95*dx*dx/(6*a[3]);								//Diferencial de tiempo calculado en base a la condición de estabilidad
 	int tf = variables["t"];								//Número máximo de intervalos de tiempo
-	
-	//int t_muestreo[100]={0};
-	//for (int i=0;i<100;i++){t_muestreo[i]=int(i*tf/100);}
-	int dt_imp = int(tf/100);
-	int t_imp[4] = {0,33,66,100};								//Tiempos que se desean graficar
-//	int t_imp2[4] = {0,int(t_imp[1]*tf/100),int(t_imp[2]*tf/100),tf-1};
+	int dt_imp = int(tf/500);								//Me permite imprimir en los archivos externos solo 500 valores de las variables de los tf periodos de tiempo
+	int t_imp[4] = {0,33,66,100};								//Tiempos que se desean graficar 
 	
 	//Crecimiento del embrión
 	double kk = variables["kk"];								//Tasa de crecimiento de la yema
-	double a_embr;
-	double b_embr;
-	double VolHuevo;
 	int t_parche=int(5*60/dt);
-	double f_parche=int(0.6*t_parche);
 	
 	//Vectores del modelo
 	vector<vector<vector< double >>> T(n, vector<vector< double >>(n, vector< double >(n)));//Temperatura en t presente en cada nodo
 	vector<vector<vector<double>>> Tf(n, vector<vector<double>>(n, vector<double>(n)));	//Temperatura en t futuro en cada nodo
 	vector<vector<vector<double>>> Fo(n, vector<vector<double>>(n, vector<double>(n)));	//Número de Fourier para cada nodo
-	vector<double> TMuestreo(6,0);				//Almacena la temperatura media de cada región
-	vector<double> VolMuestreo(6,0);				//Almacena la temperatura media de cada región
-	vector<vector<vector< double >>> Pos(n, vector<vector< double >>(n, vector< double >(n)));
+	vector<double> TMuestreo(6,0);								//Almacena la temperatura media de cada región
+	vector<double> VolMuestreo(6,0);							//Almacena el volumen de cada región
+	vector<vector<vector< double >>> Pos(n, vector<vector< double >>(n, vector< double >(n)));	//Almacena un valor entre 0 y 6 que me define a que estructura corresponde el nodo
 	
-	//Archivo de muestreo de temperatura media
+	//Archivo de muestreo de temperatura media y volumen
 	ofstream outfileTemp;
 	outfileTemp.open("TemperaturaMedia.dat");
 	outfileTemp << "Tiempo ; Temp_Aire ; Temp_Nido ; Temp_Parche; Temp_Cascara ; Temp_Albumina ; Temp_Yema ; Temp_Embrión\n";
@@ -108,72 +155,72 @@ int main () {
 	outfileVol.open("Volumen.dat");
 	outfileVol << "Tiempo ; Vol_Aire ; Vol_Nido ; Vol_Parche; Vol_Cascara ; Vol_Albumina ; Vol_Yema ; Vol_Embrión\n";
 	
-	//*************************CONDICIONES INICIALES****************************************
 	
+	//*************************CONDICIONES INICIALES****************************************
 	for (int i=0;i<n;i++){
-		
 		for (int j=0; j<n;j++){
 			for (int k=0; k<n; k++){
-				x = (i*dx)-m;						//Posiciones en mm medidas desde el centro de la red de nodos
+				x = (i*dx)-m;								//Posiciones en mm medidas desde el centro de la red de nodos
 				y = (j*dx)-m;
 				z = (k*dx)-m;
 				r2 = x*x+z*z;								//Distancia de cada punto sobre sucesivos planos y al eje y
 				R2_casc = (1-((y*y)/(a_casc*a_casc)))*(b_casc+(y*g))*(b_casc+(y*g));	//Distancia máxima de la cascara sobre sucesivos planos y al eje y
 				R2_albu = (1-((y*y)/(a_albu*a_albu)))*(b_albu+(y*g))*(b_albu+(y*g));	//Distancia máxima de la albúmina sobre sucesivos planos y al eje y
-				R2_yema = Ry*Ry - y*y;						//Distancia máxima de la yema sobre sucesivos planos y al eje y
-				R_embr = 0.001;
-				R2_embr = R_embr*R_embr;
-				if (r2>R2_casc){					//Nodos externos al huevo				
-					if (z>(b_casc*0.7)){
-						T[i][j][k]=40;
+				R2_yema = Ry*Ry - y*y;							//Distancia máxima de la yema sobre sucesivos planos y al eje y
+				R_embr = 0.002;								//Radio inicial del embrión
+				R2_embr = R_embr*R_embr;						//Radio^2 del embrión
+				if (r2>R2_casc){							//Nodos externos al huevo				
+					if (z>(b_casc*0.7)){						//Nodo parche incubación
+						T[i][j][k]=T0_Parche;
 						Pos[i][j][k]=2;
 					}
-					else if	(z<-(b_casc*0.8)){
-						T[i][j][k]=29;
+					else if	(z<-(b_casc*0.8)){					//Nodo nido
+						T[i][j][k]=T0_Nido;
 						Pos[i][j][k]=1;
-					}
-					else {
+					}	
+					else {								//Nodo aire
 						T[i][j][k]=T0_Aire;
 						Pos[i][j][k]=0;
 					}
 				}
 				
 				else {
-					if (r2<=R2_embr){					//Nodos pertenecientes a la yema
-						T[i][j][k]=T0_Huevo;					//Condición inicial de temperatura (TEMPERATURA DE PRUEBA)
+					if (r2<=R2_embr){						//Nodos pertenecientes al embrión
+						T[i][j][k]=T0_Huevo;					
 						Pos[i][j][k]=6;				
 					}
-					else if (r2<=R2_yema){					//Nodos pertenecientes a la yema
-						T[i][j][k]=T0_Huevo;					//Condición inicial de temperatura (TEMPERATURA DE PRUEBA)
+					else if (r2<=R2_yema){						//Nodos pertenecientes a la yema
+						T[i][j][k]=T0_Huevo;					
 						Pos[i][j][k]=5;
 					}
-					else if (r2<=R2_albu){					//Nodos pertenecientes a la albúmina
-						T[i][j][k]=T0_Huevo;					//Condición inicial de temperatura
+					else if (r2<=R2_albu){						//Nodos pertenecientes a la albúmina
+						T[i][j][k]=T0_Huevo;					
 						Pos[i][j][k]=4;
 					}
-					else {							//Nodos pertenecientes a la cáscara
-						T[i][j][k]=T0_Huevo;					//Condición inicial de temperatura
+					else {								//Nodos pertenecientes a la cáscara
+						T[i][j][k]=T0_Huevo;					
 						Pos[i][j][k]=3;
 					}	
 				}
 			}	
 		}
 	}	
+	
 	t0=clock();
 	//****************************EVOLUCIÓN TEMPORAL****************************************
 	bool impr;
 	bool impr2;
 	
 	for (int t=0; t<tf; t++){
-		if (t%dt_imp==0){impr=1;}else{impr=0;}
+		if (t%dt_imp==0){impr=1;}else{impr=0;}							//Las variables impr e impr2 determinan si los datos de las variables de un periodo de tiempo dado se van a imprimir en archivo externo para graficar	
 		if (t%(int(tf/3))==0){impr2=1;}else{impr2=0;}
-		R_embr = R_embr * cbrt(1+(kk*dt*(log(4*pi*rmax_y*rmax_y*rmax_y/3)-log(4*pi*R_embr*R_embr*R_embr/3))));										//Modelo Gompertz del crecimiento de un conjunto de celulas, variable: Radio de Yema
-		
+		R_embr = R_embr * cbrt(1+(kk*dt*(log(4*pi*0.9*b_albu*b_albu*b_albu/3)-log(4*pi*R_embr*R_embr*R_embr/3))));										
+		//Modelo Gompertz del crecimiento de un conjunto de celulas, variable: Radio del embrión
 		//*******************Evolución espacial del huevo********************
 		for (int i=0;i<n;i++){
 			for (int j=0; j<n;j++){
 				for (int k=0; k<n; k++){
-					x = (i*dx)-m;						//Posiciones en mm medidas desde el centro de la red de nodos
+					x = (i*dx)-m;								//Posiciones en mm medidas desde el centro de la red de nodos
 					y = (j*dx)-m;
 					z = (k*dx)-m;
 					r2 = x*x+z*z;								//Distancia de cada punto sobre sucesivos planos y al eje y
@@ -181,11 +228,10 @@ int main () {
 					R2_albu = (1-((y*y)/(a_albu*a_albu)))*(b_albu+(y*g))*(b_albu+(y*g));	//Distancia máxima de la albúmina sobre sucesivos planos y al eje y
 					R2_embr = (1-((y*y)/(R_embr*R_embr/(0.793388*0.793388))))*(R_embr+(y*g))*(R_embr+(y*g));
 					R2_yema = Ry*Ry - y*y;							//Distancia máxima de la yema sobre sucesivos planos y al eje y
-					
-					if (r2>R2_casc){					//Nodos externos al huevo				
+					if (r2>R2_casc){											
 						if (z>(b_casc*0.7)){
-							if ((t%t_parche)<f_parche){
-								T[i][j][k]=40;
+							if (T_Sup<37){						//Este condicional evalua si dada la temperatura media del huevo hay presencia de parche de incubación 
+								T[i][j][k]=T0_Parche;
 								Pos[i][j][k]=2;	
 								Nodos[2]=Nodos[2]+1;	
 								}
@@ -205,19 +251,19 @@ int main () {
 							}
 					}
 					else {		
-						if (r2<=R2_embr){				//Nodos pertenecientes a la yema
+						if (r2<=R2_embr){				
 							Pos[i][j][k]=6;
 							Nodos[6]=Nodos[6]+1;
 						}						
-						else if (r2<=R2_yema){				//Nodos pertenecientes a la yema
+						else if (r2<=R2_yema){			
 							Pos[i][j][k]=5;
 							Nodos[5]=Nodos[5]+1;
 						}
-						else if (r2<=R2_albu){				//Nodos pertenecientes a la albúmina
+						else if (r2<=R2_albu){			
 							Pos[i][j][k]=4;
 							Nodos[4]=Nodos[4]+1;
 						}
-						else {						//Nodos pertenecientes a la cáscara
+						else {					
 							Pos[i][j][k]=3;
 							Nodos[3]=Nodos[3]+1;
 						}	
@@ -225,26 +271,40 @@ int main () {
 				}	
 			}
 		}
-		
+
 		//*******************Evolución de la temperatura del huevo********************
 		for (int i=0;i<n;i++){
 			for (int j=0; j<n;j++){
 				for (int k=0; k<n; k++){		
-					if (i>0 && i<n-1 && j>0 && j<n-1 && k>0 && k<n-1){
+					if (i>0 && i<n-1 && j>0 && j<n-1 && k>0 && k<n-1){			//Selecciona nodos que internos a la frontera
 						Tf[i][j][k]=BalEnerg(Pos[i][j][k],T[i][j][k],
 								T[i+1][j][k],T[i-1][j][k],
 								T[i][j+1][k],T[i][j-1][k],
 								T[i][j][k+1],T[i][j][k-1],
-								Pos[i+1][j][k],Pos[i-1][j][k],
-								Pos[i][j+1][k],Pos[i][j-1][k],
-								Pos[i][j][k+1],Pos[i][j][k-1]);
+								T[i+1][j+1][k+1],T[i-1][j+1][k+1],
+								T[i+1][j-1][k+1],T[i-1][j-1][k+1],
+								T[i+1][j+1][k-1],T[i-1][j+1][k-1],
+								T[i+1][j-1][k-1],T[i-1][j-1][k-1],
+								Pos[i+1][j+1][k+1],Pos[i-1][j+1][k+1],
+								Pos[i+1][j-1][k+1],Pos[i-1][j-1][k+1],
+								Pos[i+1][j+1][k-1],Pos[i-1][j+1][k-1],
+								Pos[i+1][j-1][k-1],Pos[i-1][j-1][k-1]);
 					}
-					else {Tf[i][j][k]=T0_Aire;}		
-					TMuestreo[Pos[i][j][k]]=TMuestreo[Pos[i][j][k]]+Tf[i][j][k];
+					else if(Pos[i][j][k]==0){						//Condiciones de frontera abierta
+						Tf[i][j][k]=T0_Aire;
+					}
+					else if(Pos[i][j][k]==1){
+						Tf[i][j][k]=T0_Nido;
+					}
+					else if(Pos[i][j][k]==2){
+						Tf[i][j][k]=T0_Parche;
+					}		
+					TMuestreo[Pos[i][j][k]]=TMuestreo[Pos[i][j][k]]+Tf[i][j][k];		//Se almacena la temperatura de cada nodo para calcular la temperatura promedio de cada estructura
 				}
 			}
 		}
-		
+		T_Sup=((TMuestreo[3]/Nodos[3])+(TMuestreo[4]/Nodos[4])+(TMuestreo[6]/Nodos[6]))/3;		//Temperatura promedio del huevo, no tengo en cuenta la estructura yema ya que con el tiempo esta estructura desaparece y por tanto no se tendría valor para la temperatura de esta estructura
+
 		//******Se almacena la temperatura futura en la temperatura presente************	
 		for (int i=0;i<n;i++){								 
 			for (int j=0; j<n;j++){
@@ -257,20 +317,25 @@ int main () {
 		//*********Escritura a archivo externo para tiempos predeterminados**************
 		if (impr2){
 			string Nombre = "Matriz";
-			Nombre = Nombre + to_string(t_imp[int(t/(int(tf/3)))]) + ".dat";			//Me permite crear documentos independientes para cada tiempo solicitado
+			Nombre = Nombre + to_string(t_imp[int(t/(int(tf/3)))]) + ".dat";//Me permite crear documentos independientes para cada tiempo solicitado
 			ofstream outfile;						//Inicialización variable de documento
 			outfile.open(Nombre);						//Apertura de documento para escritura				
 			for (int i=0;i<n;i++){						
 				for (int j=0; j<n;j++){
 					for (int k=0; k<n; k++){
-						outfile << T[i][j][k] << "\n";					
+						if (Pos[i][j][k]>2){
+							outfile << T[i][j][k] << "\n";
+						}
+						else {
+							outfile << 0 << "\n";
+						}					
 					}
 				}
 			}
 			outfile.close();
 		}		
 		
-		//*************Temperatura media de cada región***********************************	
+		//*************Temperatura media y volumen de cada región***********************************	
 		if (impr){
 			outfileTemp << t*dt/3600 << " ; ";
 			outfileVol << t*dt/3600 << " ; ";

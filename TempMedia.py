@@ -12,7 +12,7 @@ ax.plot(tm[0],tm[4], label='Cáscara')
 ax.plot(tm[0],tm[5], label='Albúmina')
 ax.plot(tm[0],tm[6], label='Yema')
 ax.plot(tm[0],tm[7], label='Embrión')
-plt.ylim(20,100)
+#plt.ylim(0,55)
 plt.xlim(0,tm[0][-1])
 ax.legend(loc="upper right", title="Región")
 ax.set(xlabel='Tiempo (Horas)', ylabel='Temperatura (°C)',
