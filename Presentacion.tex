@@ -4,8 +4,10 @@
 \usepackage{lmodern}
 \usepackage[spanish]{babel}
 \usetheme{metropolis}
+
+
 \begin{document}
-	\author{Daniel Bernal}
+	\author{Daniel Eduardo Bernal Lozano}
 	\title{Proyecto Huevo}
 	\subtitle{Elementos finitos}
 	%\logo{}
@@ -20,31 +22,191 @@
 	
 	
 	\begin{frame}
-		\frametitle{Que hice}
+		\frametitle{Proyecto Huevo}
+		
+		Simulación de la evolución de la temperatura interna de un huevo en proceso de incubación durante las primeras horas de desarrollo.
+		
+			\begin{figure}
+			\centering
+			\includegraphics[width=0.9\linewidth]{DistTemp.jpg}
+			\caption{Temperatura del huevo durante el tiempo inicial.}
+		\end{figure}
+		
+		
+		
 	\end{frame}
 
 	\begin{frame}
-		\frametitle{Por que lo hice}
+	\frametitle{Proyecto Huevo}
+	
+	Forma del huevo y sus estructuras:
+		\begin{equation}
+		x^2/a^2+y^2/(b+xtan\theta)=1 
+	\end{equation}
+
+	\begin{equation}
+	x^2 + y^2 + z^2 = R^2
+\end{equation}
+
+	Crecimiento de la yema del huevo:
+	
+	\begin{equation}
+		\frac{dV}{dt}= const * V (log V_{max}-log V)
+	\end{equation}
+	
+\end{frame}
+
+
+
+\begin{frame}
+	\frametitle{Proyecto Huevo}
+	
+	Ecuación de difusión de calor:
+	\begin{equation}
+		\frac{\partial T}{\partial t} = \frac{k}{\rho c_p} \nabla^2 T
+	\end{equation}
+	
+	Diferencias finitas:
+
+	
+	\begin{equation*}
+		T^{n+1}_{i,j,k} = Fo(T^{n}_{i,j,k}(1/Fo -6)+T^{n}_{i+1,j,k}+T^{n}_{i-1,j,k}+T^{n}_{i,j+1,k}+T^{n}_{i,j-1,k}+
+	
+	\end{equation*}
+
+	\begin{equation*}
+		T^{n}_{i,j,k+1}+T^{n}_{i,j,k-1} + Q  \Delta x/k) 
+	\end{equation*}
+
+		\begin{equation}
+			Fo = \frac{k\Delta t}{\rho c_p (\Delta x)^2}
+	\end{equation}
+	
+	
+\end{frame}
+	
+	
+
+
+	\begin{frame}
+	\frametitle{Proyecto Huevo}
+	
+	Para contrastar los resultados obtenidos simulé la cocción de un huevo.
+	
+		\begin{figure}
+		\centering
+		\includegraphics[width=0.6\linewidth]{TemperaturaCopia.jpg}
+		\caption{Temperatura del huevo en cocción para diferentes periodos de tiempo.}
+	\end{figure}
+	
+	
+	
+\end{frame}
+
+
+
+	\begin{frame}
+		\frametitle{Proyecto Huevo}
+		Modelar un sistema que en el cual interactúan diferentes variables. Volumen, temperatura.
+		
+	\begin{figure}
+	\centering
+	\includegraphics[width=0.65\linewidth]{TemperaturaMedia.jpg}
+	\caption{Temperatura media de las diferentes estructuras del modelo durante 3 horas.}
+\end{figure}
+	
 	\end{frame}
 
 	\begin{frame}
 		\frametitle{Como lo hice}
+		C++ -> evolución temporal\\
+		Python -> Graficar\\
+		Latex -> Documento\\
+		Make -> Compilar documentos\\
+	
+				\begin{figure}
+			\centering
+			\includegraphics[width=0.9\linewidth]{DistTemp.jpg}
+			\caption{Temperatura del huevo durante el tiempo inicial.}
+		\end{figure}
+		
+		
+		
+
+		
+		
 	\end{frame}
 
 	\begin{frame}
 		\frametitle{Resultados}
+			\begin{figure}
+			\centering
+			\includegraphics[width=0.8\linewidth]{TemperaturaMedia.jpg}
+			\caption{Temperatura media de las diferentes estructuras del modelo durante 3 horas.}
+		\end{figure}
 	\end{frame}
 
 	\begin{frame}
+		\frametitle{Resultados}
+		\begin{figure}
+			\centering
+			\includegraphics[width=0.7\linewidth]{Volumen.jpg}
+			\caption{Volumen de las diferentes estructuras del modelo durante 3 horas.}
+		\end{figure}
+	\end{frame}
+
+
+	\begin{frame}
+	\frametitle{Resultados}
+		\begin{figure}
+		\centering
+		\includegraphics[width=0.7\linewidth]{DistTempFinal.jpg}
+		\caption{Temperatura del huevo durante el tiempo inicial.}
+	\end{figure}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Resultados}
+		\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.7\linewidth]{TemperaturaMediaCopia.jpg}
+		\caption{Evolución temporal de la temperatura media del huevo en cocción.}
+	\end{figure}
+\end{frame}
+
+
+	\begin{frame}
 		\frametitle{Conclusiones}
+		La comparación con los resultados de la cocción del huevo muestran que el método aplicado es una buena aproximación al modelo.\\
+		
+		El método falla al adicionar términos de convección y generación de calor.\\
+		
+		La definición de la red de nodos no es la adecuada ya que aparecen nodos aislados dentro de estructuras bien definidas.\\
+		
+		La representación de los intervalos de tiempo es muy pequeña, por tanto no es posible obtener resultados fiables al evolucionar el sistema durante largos periodos de tiempo.\\
+		
+		Diferencias finitas es un buen método para aprender a resolver sistemas de ecuaciones.\\
+		
 	\end{frame}
 
 	\begin{frame}
 		\frametitle{Siguientes pasos}
+		Definir de manera adecuada la red de nodos.\\
+		Implementar métodos mas robustos como elementos finitos.\\
+		Incluir términos de convección, radiación y generación.\\
+		Incluir variables que influyen en la generación de calor como el transporte de oxigeno a través de la cáscara hasta el embrión.
 	\end{frame}
 
 	\begin{frame}
 		\frametitle{Referencias}
+		1. D.C. Deeming y M.W.J. Ferguson. (1992) Egg incubation: its effects on embryonic development in birds and reptiles.\\
+		
+		
+		2. B.M. Freeman. (1974) Development of the avian embryo.\\
+		
+		3. D.R. Croft, David G. Lilley (1997) Heat Transfer Calculations Using Finite Difference Equations\\
+		
+		4. P Roura, J Fort and J Saurina (2000) How long does it take to boil an egg?. A simple approach to the energy transfer equation.\\
 	\end{frame}
 
 

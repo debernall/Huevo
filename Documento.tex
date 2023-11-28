@@ -1,7 +1,8 @@
 \documentclass{article}
 \title{Proyecto Huevo}
 \author{Daniel Eduardo Bernal Lozano}
-\date{Noviembre 19, 2023}
+\date{Noviembre 28, 2023}
+\usepackage{graphicx}
 
 
 \begin{document}
@@ -10,86 +11,167 @@
 		
 	\section{Introducción}
 	
-	Descripción del proyecto
+	El método de diferencias finitas es una herramienta ampliamente usada para encontrar una solución numérica a sistemas en los cuales usualmente aparecen múltiples ecuaciones diferenciales y además permite abordar estructuras geométricas complejas. Como es el caso de los sistemas biológicos en los que se tienen diferentes variables que interactúan a lo largo del tiempo y cuyas estructuras suelen tener una forma poco regular. En este proyecto se pretende modelar la evolución de la temperatura de un huevo en desarrollo durante sus primeras fases posterior a la postura, este un sistema simple ya que se tiene una geometría aproximadamente regular de cada estructura del huevo. Dado que en este caso es de interés la variable temperatura y teniendo en cuenta que no se encontraron mediciones experimentales de la temperatura para cada estructura durante las primeras fases del desarrollo embrionario, los resultados serán comparados con los obtenidos en un experimento de cocción de un huevo. 
+	
 	\vspace{0.5em}
 	
 	\section{Marco teórico}
 	
-	\subsection{Biología del huevo}
+	\subsection{Biología del huevo de gallina}
 	
-	\subsubsection{Estructura del huevo}
+	El huevo es un mecanismo de reproducción que presentan algunos animales lo cual les permite llevar a cabo el desarrollo embrionario de la cría fuera de la madre. El huevo en particular, el de gallina consiste en un óvulo que presenta una alta cantidad de vitelo y albúmina que sirven de alimento al embrión y una capa calcárea externa que se adhiere al huevo tras su paso por el oviducto. Los huevos tras su postura deben pasar por un proceso de incubación que dura aproximadamente 21 días, tiempo durante el cual la madre debe regular las diferentes condiciones ambientales para lograr el adecuado desarrollo de la cría. Durante el proceso de incubación, la gallina cede calor al huevo gracias a una región llamada parche de incubación que presenta una alta tasa de vascularización y pocas plumas. \\
 	
-	\subsubsection{Desarrollo embrionario}
+	\subsubsection{Forma del huevo}
+	Dado que la formación del huevo que inicialmente es un cuerpo esférico se da tras su paso por el oviducto de la madre, algunos autores sugieren modelar la forma del huevo en base a una transformación del sistema de coordenadas. En especial, Jain Smart sugiere modelar la forma del huevo considerando un sistema de coordenadas trapezoidales [1]. La ecuación que describe el perfil de la forma del huevo es la siguiente:
 	
-	\subsubsection{Incubación}
+	\begin{equation}
+		x^2/a^2+y^2/(b+xtan\theta)=1
+	\end{equation}
 	
-	asd
+	Donde a es la longitud del semieje menor, b es la longitud del semieje mayor y el ángulo corresponde la tangente de la superficie en el punto medio de la curva.	\\
 	
-	\subsubsection{Energía del huevo}
+	En el código se toma en cuenta esta ecuación para modelar la forma de la cáscara, la albúmina y el embrión.	
 	
-	\subsubsection{Factores que participan en el desarrollo}
+	\subsubsection{Desarrollo del huevo}
 	
-	\subsubsection{Modelos numéricos}
+	Durante el proceso de incubación el embrión consume de manera simultanea tanto el albumen como el vitelo, al mismo tiempo que se da la formación de complejas estructuras que facilitan el intercambio de calor con el exterior como lo son el alantoides, dentro de esta estructura aparecen una serie de vasos sanguíneos que transportan oxigeno al embrión y facilitan la excreción de sustancias (Freeman y Vince [2]). \\
 	
-	\subsection{Ecuación de calor}
+	Scott Turner [1] modelar la evolución de la temperatura a lo largo del tiempo durante el periodo de incubación considerando la presencia del calor generado por el metabolismo, la circulación, el calor aportado a través del parche de incubación y las condiciones del aire circundante. En este modelo se consideran términos de conducción y convección.
 	
-	\subsubsection{Condiciones iniciales}
-	
-	\subsubsection{Condiciones de frontera}
-	
-	\subsubsection{Solución exacta}
-	
-	\subsubsection{Solución numérica por el método de diferencias finitas}
-	
-	sdfsdf\\
-		
+	Adicionalmente, el 
+			
 	\section{Metodología}
 	
 	\subsection{Planteamiento del modelo}
+	En este proyecto se modelará la evolución de la temperatura a lo largo del tiempo considerando solamente la conducción de calor a través de diferentes regiones. La ecuación de difusión de calor planteada es la siguiente:
+	
+	\begin{equation}
+		\frac{\partial T}{\partial t} = \frac{k}{\rho c_p} \nabla^2 T
+	\end{equation}
+	
+	Donde k es la conductividad térmica, \(\rho\) es la densidad del material y cp es la capacidad calorífica.\\
+	
+	Para solucionar esta ecuación mediante el método de diferencias finitas, se considera una red de nodos en la cual cada nodo presenta una ecuación particular de acuerdo a las variables que caracterizan cada uno de estos.\\
+	
+	Teniendo en cuenta el procedimiento desarrollo en el libro de David Croft y David Lilley, se pueden considerar términos adicionales como generación de calor Q en el nodo de la siguiente manera [3]: 
+	
+	\begin{equation}
+		T^{n+1}_{i,j,k} = Fo(T^{n}_{i,j,k}(1/Fo -6)+T^{n}_{i+1,j,k}+T^{n}_{i-1,j,k}+T^{n}_{i,j+1,k}+T^{n}_{i,j-1,k}+T^{n}_{i,j,k+1}+T^{n}_{i,j,k-1} + Q\Delta x/k) 
+	\end{equation}
+	
+	Donde Fo es el número de Fourier e indica un valor de estabilidad en el cual es posible aplicar el método de diferencias finitas. En base a este número se calcula la longitud de los pasos de tiempo tras cada ciclo.
+	\begin{equation}
+		Fo = \frac{k\Delta t}{\rho c_p (\Delta x)^2}
+	\end{equation}
+	
+	Para el caso particular de la ecuación 3, el valor de Fo mínimo es 1/6.
+	
+	La inclusión de términos adicionales a la ecuación de calor como términos de convección influyen directamente en el valor mínimo de Fo y por tanto se tendrían ciclos con periodos de tiempo mucho mas pequeños. Lo cual representa una limitante para la implementación del método.
 	
 	\subsection{Red de nodos}
 	
-	\subsection{Ecuaciones}
+	Se consideró una red tridimensional formada por 125.000 nodos que representan un espacio cúbico en el cual el nodo central representa el origen de un sistema de coordenadas cartesianas. Posteriormente por medio de un algoritmo se caracterizó cada nodo por medio de las ecuaciones que delimitan la frontera de cada estructura.\\ 
 	
-	\subsection{Graficas}	
+	La yema se simuló como una esfera por medio de la ecuación:
+	\begin{equation}
+		x^2 + y^2 + z^2 = R^2
+	\end{equation}
+	La región de albúmina y la cáscara se simularon en base a la ecuación 1. Finalmente, el embrión se simuló usando también la ecuación 1 pero considerando el modelo de crecimiento propuesto por Gompertz para el volumen [1]: 
+	 
+	\begin{equation}
+		\frac{dV}{dt}= const * V (log V_{max}-log V)
+	\end{equation}
+	
+	Dado que el volumen del embrión dificulta la discretización del modelo, en el código se emplea la variable de longitud de eje menor.
 	
 	\section{Justificación}
+	El método de diferencias finitas por su simplicidad facilita el aprendizaje de herramientas computacionales. Con este proyecto pretendo modelar un sistema que en principio parece depender de muy pocas variables pero tras su evolución temporal surgen un conjunto de variables que afectan de manera directa la temperatura y complican su modelado.\\
 	
-	porqué elementos finitos\\
+	El principal reto de este proyecto es caracterizar la red de nodos y lograr una evolución temporal de la temperatura. Si bien, no es posible lograr representar la temperatura de cada nodo para el total del tiempo de incubación del huevo por el gran número de factores que influyen en esta como el intercambio gaseoso, la diversidad de estructuras, etc... voy a suponer que el embrión tiene un crecimiento muy superior al normal para observar el comportamiento de la temperatura del huevo. \\
+	
+	Adicionalmente, incluí una región de calefacción que regula la temperatura del huevo y representa el parche de incubación. Esta adición se acercará un poco mas a la realidad y al modelo propuesto por Turner [1].
+	
 	
 	\section{Resultados}
 	
 	\subsection{Estructura y forma}
 	
+	Se ejecutó el código para un huevo con las siguiente características b=1.96cm, a=2.46cm y \(\theta\)=8. Las diferentes variables térmicas y estructurales de cada estructura del huevo se muestran en el documento DatosIniciales.dat. El sistema evolucionó durante 50.000 ciclos equivalentes a aproximadamente 3 horas.\\
+	
+	La forma del huevo obtenido se muestra en la figura 1 utilizando los valores de temperatura inicial:\\
+	
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.9\linewidth]{DistTemp.jpg}
+		\caption{Temperatura del huevo durante el tiempo inicial.}
+	\end{figure}
+
+
 	\subsection{Evolución de la temperatura en el tiempo}
 	
-	\subsection{Calor metabólico}
+	La temperatura de cada estructura se calculó en base al valor promedio de todos los nodos que pertenecen a la misma. Los resultados obtenidos se muestran en la figura 2.
 	
-	\subsection{Calor parental}
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.9\linewidth]{TemperaturaMedia.jpg}
+		\caption{Temperatura media de las diferentes estructuras del modelo durante 3 horas.}
+	\end{figure}
+
+	El crecimiento del embrión se calculó en base a la cantidad de nodos pertenecientes a cada región y multiplicando este valor por el volumen que representa cada nodo \(\Delta\)x*\(\Delta\)x*\(\Delta\)x. Los resultados se muestran en la figura 3.
+	
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.9\linewidth]{Volumen.jpg}
+		\caption{Volumen de las diferentes estructuras del modelo durante 3 horas.}
+	\end{figure}
+	
+	La temperatura de cada nodo al final de la simulación se muestra en la figura 4.
+	
+	\begin{figure}
+	\centering
+	\includegraphics[width=0.9\linewidth]{DistTempFinal.jpg}
+	\caption{Temperatura del huevo durante el tiempo final.}
+	\end{figure}
 	
 	\section{Análisis de resultados}
 	
-	\subsection{Estructura y forma}
+	Con el objetivo de comparar los resultados obtenidos se cambiaron los valores iniciales de las diferentes variables para simular la cocción de un huevo. Para esto se generó una copia del código inicial y se simula la evolución de la temperatura en cada estructura. Se simula un huevo con temperatura inicial de 4°C inmerso en agua a 100°C durante 5000 periodos de tiempo, equivalentes aproximadamente a 20 minutos.\\
 	
-	\subsection{Evolución de la temperatura en el tiempo}
+	La temperatura del huevo para diferentes periodos de tiempo durante la cocción se muestra en la figura 5. \\
 	
-	\subsection{Calor metabólico}
+	\begin{figure}
+		\centering
+		\includegraphics[width=1\linewidth]{TemperaturaCopia.jpg}
+		\caption{Temperatura del huevo en cocción para diferentes periodos de tiempo.}
+	\end{figure}
 	
-	\subsection{Calor parental}
+	La temperatura de cada estructura a lo largo del tiempo se muestra en la figura 6.\\
 	
+		\begin{figure}[h]
+		\centering
+		\includegraphics[width=1\linewidth]{TemperaturaMediaCopia.jpg}
+		\caption{Evolución temporal de la temperatura media del huevo en cocción.}
+	\end{figure}
+		
+	De acuerdo a la aproximación realizada por P Roura, J Fort y J Saurina[4], un huevo alcanza su cocción completa cuando alcanza una temperatura de 70°C. Esta temperatura la alcanza según los anteriores autores al trascurrir 13 minutos. En la gráfica 6 se observa que esta temperatura se alcanza en el centro del huevo (embrión sin crecimiento) al trascurrir 11 minutos. Esta simulación a pesar de que se ajusta al tiempo calculado por los autores anteriormente enunciados difiere en que en este proyecto se consideraron las variables térmicas asociadas a cada estructura y se consideró la forma ovoide del huevo. Por tanto, puede ser una buena aproximación para futuras investigaciones si se adicionan los términos de convección y radiación.\\
+	
+	Durante la implementación del código me encontré con diferentes dificultades como la gestión de memoria y el pequeño periodo de tiempo que debe tener cada ciclo para que el método funcione de manera adecuada. Desarrollé algunas ecuaciones para mejorar el modelo, en el cual traté de incluir los términos de generación y convección pero no me fue posible la implementación ya que no encontré unos valores adecuados de tiempo, de generación de calor y de convección para lograr un correcto desarrollo del modelo. Adicionalmente, al introducir estos términos en la compleja estructura propuesta surgían nodos aislados en los cuales aparecían simultaneamente los términos de conducción, convección y generación que reducían significativamente el intervalo de tiempo entre ciclos y por tanto no tenía una evolución temporal.
+
 	\section{Conclusiones}
 	
-	\section{Notas adicionales}
+	El método de diferencias finitas resulta ser un buen método para estudiar la evolución de sistemas en los cuales interactúan diferentes variables, sin embargo este método se limita mucho a la estructura y distribución de los nodos, por tanto una mejor aproximación se podría lograr mediante la implementación de otras técnicas como elementos finitos o encontrando ecuaciones que describan el sistema de manera estacionaria.
 	
-	Oxigeno, Humedad, Membrana corioalantoidea, Cámara de aire
 		
 	\section{Bibliografía}
 	
-	P.W. Barlow, D. Bray, P.B. Green y J.M.W. Slack. (1991) From egg to embryo.\\
-	B.M. Freeman. (1974) Development of the avian embryo.\\
-	L.G. Barth y L.J. Barth. (1954) The energetics of development.\\
-	D.C. Deeming y M.W.J. Ferguson. (1992) Egg incubation: its effects on embryonic development in birds and reptiles.\\
-	S. Sandoval, V. Gomez-Muñoz, J. Gutierrez y M.A. Porta-Gandara. (2011) Metabolic heat estimation of the sea turtle Lepidochelys olivacea embryos.\\
+	1. D.C. Deeming y M.W.J. Ferguson. (1992) Egg incubation: its effects on embryonic development in birds and reptiles.\\
+	
+	
+	2. B.M. Freeman. (1974) Development of the avian embryo.\\
+	
+	3. D.R. Croft, David G. Lilley (1997) Heat Transfer Calculations Using Finite Difference Equations\\
+	
+	4. P Roura, J Fort and J Saurina (2000) How long does it take to boil an egg?. A simple approach to the energy transfer equation.\\
 	
 	
 \end{document}

@@ -40,7 +40,7 @@ double BalEnerg(double P0, double T0, double T1, double T2, double T3, double T4
 	//		}
 	//	}
 	//}
-	if (P0<=2){								
+	if (P0<=1){								
 		T=T0;
 	}
 //	else if(P0==6){
@@ -48,9 +48,6 @@ double BalEnerg(double P0, double T0, double T1, double T2, double T3, double T4
 //	}
 	else{
 		T = Fo*((T0*((1/Fo)-6))+T1+T2+T3+T4+T5+T6);
-		if (P0==6){
-			T = T + Fo*(0.04*dx*dx/k_term[P0]);
-		}
 	}
 	
 /*	if (VInt>0 && P0>2){
@@ -82,7 +79,7 @@ int main () {
 	unsigned t0, t1;
 	//********************IMPORTE DE VARIABLES Y DATOS INICIALES****************************
 	string linea;										//Variable string que me va a almacenar la info de las variables
-  	fstream Datos ("DatosIniciales.dat");							//Importación de los datos iniciales
+  	fstream Datos ("DatosInicialesCopia.dat");							//Importación de los datos iniciales
 	map<string, double> variables;								//Creo un diccionario que va a almacenar las variables
 												//Fuente: https://en.cppreference.com/w/cpp/container/map
 	while ( getline (Datos,linea) ){							//Se recorre cada linea del documento
@@ -133,13 +130,13 @@ int main () {
 		
 	//Evolución temporal
 	dt = 0.95*dx*dx/(6*a[3]);								//Diferencial de tiempo calculado en base a la condición de estabilidad
+	cout << dt << "\n";
 	int tf = variables["t"];								//Número máximo de intervalos de tiempo
-	int dt_imp = int(tf/500);								//Me permite imprimir en los archivos externos solo 500 valores de las variables de los tf periodos de tiempo
+	int dt_imp = int(tf/50);								//Me permite imprimir en los archivos externos solo 500 valores de las variables de los tf periodos de tiempo
 	int t_imp[4] = {0,33,66,100};								//Tiempos que se desean graficar 
 	
 	//Crecimiento del embrión
 	double kk = variables["kk"];								//Tasa de crecimiento de la yema
-	int t_parche=int(5*60/dt);
 	
 	//Vectores del modelo
 	vector<vector<vector< double >>> T(n, vector<vector< double >>(n, vector< double >(n)));//Temperatura en t presente en cada nodo
@@ -151,16 +148,17 @@ int main () {
 	
 	//Archivo de muestreo de temperatura media y volumen
 	ofstream outfileTemp;
-	outfileTemp.open("TemperaturaMedia.dat");
+	outfileTemp.open("TemperaturaMediaCopia.dat");
 	outfileTemp << "Tiempo ; Temp_Aire ; Temp_Nido ; Temp_Parche; Temp_Cascara ; Temp_Albumina ; Temp_Yema ; Temp_Embrión\n";
 	
 	ofstream outfileVol;
-	outfileVol.open("Volumen.dat");
+	outfileVol.open("VolumenCopia.dat");
 	outfileVol << "Tiempo ; Vol_Aire ; Vol_Nido ; Vol_Parche; Vol_Cascara ; Vol_Albumina ; Vol_Yema ; Vol_Embrión\n";
 	
 	
 	//*************************CONDICIONES INICIALES****************************************
 	for (int i=0;i<n;i++){
+		
 		for (int j=0; j<n;j++){
 			for (int k=0; k<n; k++){
 				x = (i*dx)-m;								//Posiciones en mm medidas desde el centro de la red de nodos
@@ -215,6 +213,7 @@ int main () {
 	bool impr2;
 	
 	for (int t=0; t<tf; t++){
+		
 		if (t%dt_imp==0){impr=1;}else{impr=0;}							//Las variables impr e impr2 determinan si los datos de las variables de un periodo de tiempo dado se van a imprimir en archivo externo para graficar	
 		if (t%(int(tf/3))==0){impr2=1;}else{impr2=0;}
 		R_embr = R_embr * cbrt(1+(kk*dt*(log(4*pi*0.9*b_albu*b_albu*b_albu/3)-log(4*pi*R_embr*R_embr*R_embr/3))));										
@@ -233,16 +232,11 @@ int main () {
 					R2_yema = Ry*Ry - y*y;							//Distancia máxima de la yema sobre sucesivos planos y al eje y
 					if (r2>R2_casc){											
 						if (z>(b_casc*0.7)){
-							if (T_Sup<37){						//Este condicional evalua si dada la temperatura media del huevo hay presencia de parche de incubación 
-								T[i][j][k]=T0_Parche;
-								Pos[i][j][k]=2;	
-								Nodos[2]=Nodos[2]+1;	
-								}
-							else{
+							
 								T[i][j][k]=T0_Aire;
 								Pos[i][j][k]=0;
 								Nodos[0]=Nodos[0]+1;
-							}
+							
 						}
 						else if	(z<-(b_casc*0.8)){
 							Pos[i][j][k]=1;
@@ -320,7 +314,7 @@ int main () {
 		//*********Escritura a archivo externo para tiempos predeterminados**************
 		if (impr2){
 			string Nombre = "Matriz";
-			Nombre = Nombre + to_string(t_imp[int(t/(int(tf/3)))]) + ".dat";//Me permite crear documentos independientes para cada tiempo solicitado
+			Nombre = Nombre + to_string(t_imp[int(t/(int(tf/3)))]) + "Copia.dat";//Me permite crear documentos independientes para cada tiempo solicitado
 			ofstream outfile;						//Inicialización variable de documento
 			outfile.open(Nombre);						//Apertura de documento para escritura				
 			for (int i=0;i<n;i++){						
@@ -340,8 +334,8 @@ int main () {
 		
 		//*************Temperatura media y volumen de cada región***********************************	
 		if (impr){
-			outfileTemp << t*dt/3600 << " ; ";
-			outfileVol << t*dt/3600 << " ; ";
+			outfileTemp << t*dt/60 << " ; ";
+			outfileVol << t*dt/60 << " ; ";
 			for (int w=0;w<7;w++){
 				TMuestreo[w]=TMuestreo[w]/Nodos[w];
 				VolMuestreo[w]=Nodos[w]*dx*dx*dx;
